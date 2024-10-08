@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/coins/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/coins/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/coins",
+  "projects": {
+    "coins": {
+      "type": "application",
+      "root": "apps/coins",
+      "entryFile": "main",
+      "sourceRoot": "apps/coins/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/coins/tsconfig.app.json"
+      }
+    },
+    "players": {
+      "type": "application",
+      "root": "apps/players",
+      "entryFile": "main",
+      "sourceRoot": "apps/players/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/players/tsconfig.app.json"
+      }
+    }
+  }
+}
