@@ -3,6 +3,7 @@ import { PlayService } from './services';
 import { CacheModule } from '@nestjs/cache-manager';
 import * as redisStore from 'cache-manager-redis-store';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { WebsocketGateway } from './gateways';
 
 @Module({
   imports: [
@@ -27,6 +28,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
       },
     ]),
   ],
-  providers: [PlayService],
+  providers: [PlayService, WebsocketGateway],
 })
 export class PlayModule {}
