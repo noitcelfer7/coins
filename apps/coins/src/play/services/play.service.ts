@@ -47,7 +47,7 @@ export class PlayService {
     return cells.toString('hex');
   }
 
-  async tryToOpenCell(x: number, y: number) {
+  async tryToOpenCell(x: number, y: number, username: string) {
     if (
       x >= 0 &&
       x < this.PLAY_FIELD_WIDTH &&
@@ -60,7 +60,11 @@ export class PlayService {
         const isCoinFound = playField[y * this.PLAY_FIELD_HEIGHT + x] !== 0;
 
         if (isCoinFound) {
-          this.playersMicroserviceClientKafka.emit('COIN_FOUND', { x, y });
+          this.playersMicroserviceClientKafka.emit('COIN_FOUND', {
+            x,
+            y,
+            username,
+          });
         }
       });
     }

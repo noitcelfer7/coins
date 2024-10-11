@@ -5,7 +5,9 @@ export class PlayerEntity {
   @Column('varchar')
   password: string;
 
-  @Column('bigint')
+  @Column('bigint', {
+    nullable: true,
+  })
   balance: number;
 
   @Column('varchar', {
