@@ -17,7 +17,7 @@ export class BalanceService {
       throw new Error('Player does not exists');
     }
 
-    player.balance += count;
+    player.balance = Number(player.balance) + Number(count);
 
     await this.playerRepository.save(player);
   }
