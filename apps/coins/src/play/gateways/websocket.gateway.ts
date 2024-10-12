@@ -1,6 +1,7 @@
 import { Inject } from '@nestjs/common';
 import { ClientKafka } from '@nestjs/microservices';
 import {
+  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -10,6 +11,9 @@ import {
 } from '@nestjs/websockets';
 import { Server, WebSocket } from 'ws';
 import { PlayService } from '../services';
+import { MessageEnum } from '../enums';
+import { FindRequestDto, OpenRequestDto, PlayRequestDto } from '../dtos';
+import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway(9999, {
   cors: {
@@ -21,6 +25,8 @@ export class WebsocketGateway
   implements OnGatewayConnection, OnGatewayDisconnect
 {
   constructor(
+    @Inject()
+    private readonly jwtService: JwtService,
     @Inject('PLAYERS_MICROSERVICE')
     private readonly playersMicroserviceClientKafka: ClientKafka,
     @Inject() private readonly playService: PlayService,
@@ -29,25 +35,78 @@ export class WebsocketGateway
   private connections: Map<WebSocket, string> = new Map<WebSocket, string>();
 
   @WebSocketServer()
-  server: Server;
+  private readonly server: Server;
 
-  @SubscribeMessage('auth')
-  async handleAuthMessage(client: WebSocket, @MessageBody() authToken: string) {
-    this.connections.set(client, authToken);
+  @SubscribeMessage(MessageEnum.FIND)
+  async onFindMessage(
+    @ConnectedSocket() webSocket: WebSocket,
+    @MessageBody() findRequestDto: FindRequestDto,
+  ) {
+    const playFieldCells = await this.playService.getPlayFieldCells(
+      findRequestDto.offset,
+      1000,
+    );
 
-    this.playersMicroserviceClientKafka.emit('PLAYER_AUTHORIZED', {});
+    webSocket.send(JSON.stringify({ cells: playFieldCells }), (err) =>
+      console.log('An error occured: ', err),
+    );
   }
 
-  @SubscribeMessage('open')
-  async handleOpenMessage(
-    client: WebSocket,
-    @MessageBody() coords: { x: number; y: number },
+  @SubscribeMessage(MessageEnum.OPEN)
+  async onOpenMessage(
+    @ConnectedSocket() webSocket: WebSocket,
+    @MessageBody() openRequestDto: OpenRequestDto,
   ) {
-    this.playService.tryToOpenCell(
-      coords.x,
-      coords.y,
-      this.connections.get(client) || 'undefined',
+    const username = this.connections.get(webSocket);
+
+    if (!username) {
+      webSocket.close();
+
+      return;
+    }
+
+    const isOk = await this.playService.tryToOpenCell(
+      openRequestDto.x,
+      openRequestDto.y,
+      username,
     );
+
+    if (isOk) {
+      for (const [k] of this.connections) {
+        k.send(JSON.stringify(openRequestDto), (err) =>
+          console.log('An error occured: ', err),
+        );
+      }
+    } else {
+      webSocket.send(JSON.stringify(false));
+    }
+  }
+
+  @SubscribeMessage(MessageEnum.PLAY)
+  async onPlayMessage(
+    @ConnectedSocket() webSocket: WebSocket,
+    @MessageBody() playRequestDto: PlayRequestDto,
+  ) {
+    console.log(process.env);
+    const isTokenValid = this.jwtService.verify(playRequestDto.accessToken);
+
+    if (!isTokenValid) {
+      webSocket.close();
+
+      return;
+    }
+
+    const { username } = this.jwtService.decode(playRequestDto.accessToken);
+
+    if (!username) {
+      webSocket.close();
+
+      return;
+    }
+
+    this.connections.set(webSocket, username);
+
+    this.playersMicroserviceClientKafka.emit('PLAYER_STARTED', { username });
   }
 
   async handleConnection(client: WebSocket) {

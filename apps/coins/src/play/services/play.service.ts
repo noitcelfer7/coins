@@ -48,25 +48,31 @@ export class PlayService {
   }
 
   async tryToOpenCell(x: number, y: number, username: string) {
+    let isOk = false;
+
     if (
       x >= 0 &&
       x < this.PLAY_FIELD_WIDTH &&
       y >= 0 &&
       y < this.PLAY_FIELD_HEIGHT
     ) {
-      this.cacheManager.get('PLAY_FIELD', (error: any, result: string) => {
-        const playField = Buffer.from(result, 'hex');
+      const kk = await this.cacheManager.store.get<string>('PLAY_FIELD');
 
-        const isCoinFound = playField[y * this.PLAY_FIELD_HEIGHT + x] !== 0;
+      const playField = Buffer.from(kk, 'hex');
 
-        if (isCoinFound) {
-          this.playersMicroserviceClientKafka.emit('COIN_FOUND', {
-            x,
-            y,
-            username,
-          });
-        }
-      });
+      const isCoinFound = playField[y * this.PLAY_FIELD_HEIGHT + x] !== 0;
+
+      if (isCoinFound) {
+        isOk = true;
+
+        this.playersMicroserviceClientKafka.emit('COIN_FOUND', {
+          x,
+          y,
+          username,
+        });
+      }
     }
+
+    return isOk;
   }
 }
