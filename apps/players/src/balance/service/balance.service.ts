@@ -28,6 +28,7 @@ export class BalanceService {
 
   async replenishBalance(username: string, count: number) {
     const player = await this.playerRepository.findOne({ where: { username } });
+
     if (!player) {
       throw new Error('ERR_TODO');
     }

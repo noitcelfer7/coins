@@ -5,7 +5,7 @@ import { WsAdapter } from '@nestjs/platform-ws';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'log'],
+    logger: ['error', 'log', 'warn'],
   });
 
   app.useWebSocketAdapter(new WsAdapter(app));

@@ -1,5 +1,5 @@
 export enum MessageEnum {
-  FIND = 'FIND',
-  OPEN = 'OPEN',
-  PLAY = 'PLAY',
+  REQUEST_CHANGE_QUAD = 'FIND',
+  REQUEST_OPEN_CELL = 'OPEN',
+  REQUEST_START_PLAY = 'PLAY',
 }

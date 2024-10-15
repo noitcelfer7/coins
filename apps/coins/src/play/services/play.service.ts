@@ -1,23 +1,16 @@
 import { Cache, CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable } from '@nestjs/common';
-import { ClientKafka } from '@nestjs/microservices';
 
 @Injectable()
 export class PlayService {
   private readonly PLAY_FIELD_HEIGHT = 1000;
   private readonly PLAY_FIELD_WIDTH = 1000;
 
-  constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    @Inject('PLAYERS_MICROSERVICE')
-    private readonly playersMicroserviceClientKafka: ClientKafka,
-  ) {
+  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.fillPlayField();
   }
 
   async fillPlayField() {
-    this.playersMicroserviceClientKafka.emit('PLAY_FIELD_FILLING', {});
-
     const cells = new Uint8Array(
       this.PLAY_FIELD_HEIGHT * this.PLAY_FIELD_WIDTH,
     );
@@ -30,25 +23,27 @@ export class PlayService {
       cells[i] = 1;
     }
 
-    const value = Buffer.from(cells).toString('hex');
+    const buffer = Buffer.from(cells);
+
+    const value = buffer.toString('hex');
 
     await this.cacheManager.set('PLAY_FIELD', value, { ttl: 0 });
-
-    this.playersMicroserviceClientKafka.emit('PLAY_FIELD_FILLED', {});
   }
 
-  async getPlayFieldCells(offset: number, cellsCount: number) {
-    const result = await this.cacheManager.store.get<string>('PLAY_FIELD');
+  async getPlayField(offset: number, cellsCount: number) {
+    const value = await this.cacheManager.store.get<string>('PLAY_FIELD');
 
-    const playField = Buffer.from(result, 'hex');
+    const buffer = Buffer.from(value, 'hex');
 
-    const cells = playField.subarray(offset, offset + cellsCount);
+    const subArray = buffer.subarray(offset, offset + cellsCount);
 
-    return cells.toString('hex');
+    const playFieldCells = subArray.toJSON().data;
+
+    return playFieldCells;
   }
 
-  async tryToOpenCell(x: number, y: number, username: string) {
-    let isOk = false;
+  async openCell(x: number, y: number) {
+    let isCoinFound = false;
 
     if (
       x >= 0 &&
@@ -56,33 +51,23 @@ export class PlayService {
       y >= 0 &&
       y < this.PLAY_FIELD_HEIGHT
     ) {
-      const kk = await this.cacheManager.store.get<string>('PLAY_FIELD');
+      const value = await this.cacheManager.store.get<string>('PLAY_FIELD');
 
-      const playField = Buffer.from(kk, 'hex');
+      const buffer = Buffer.from(value, 'hex');
 
-      const isCoinFound = playField[y * this.PLAY_FIELD_HEIGHT + x] !== 0;
+      const isNotZero = buffer[y * this.PLAY_FIELD_HEIGHT + x] !== 0;
 
-      if (isCoinFound) {
-        isOk = true;
+      if (isNotZero) {
+        isCoinFound = true;
 
-        this.playersMicroserviceClientKafka.emit('COIN_FOUND', {
-          x,
-          y,
-          username,
-        });
+        buffer[y * this.PLAY_FIELD_HEIGHT + x] = 0;
 
-        const result = await this.cacheManager.store.get<string>('PLAY_FIELD');
-
-        const playField = Buffer.from(result, 'hex');
-
-        playField[y * 1000 + x] = 0;
-
-        const value = playField.toString('hex');
+        const value = buffer.toString('hex');
 
         await this.cacheManager.set('PLAY_FIELD', value, { ttl: 0 });
       }
     }
 
-    return isOk;
+    return isCoinFound;
   }
 }

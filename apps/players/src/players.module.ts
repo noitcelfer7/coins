@@ -1,7 +1,5 @@
 import { ConfigModule } from '@nestjs/config';
 import { Module } from '@nestjs/common';
-import { PlayersController } from './players.controller';
-import { PlayersService } from './players.service';
 import { AuthModule } from './auth/auth.module';
 import { PlayerModule } from './player/player.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -27,7 +25,5 @@ import typeormConfig from './config/typeorm/typeorm.config';
     PlayerModule,
     BalanceModule,
   ],
-  controllers: [PlayersController],
-  providers: [PlayersService],
 })
 export class PlayersModule {}
