@@ -6,6 +6,8 @@ export class PlayService {
   private readonly PLAY_FIELD_HEIGHT = 1000;
   private readonly PLAY_FIELD_WIDTH = 1000;
 
+  private readonly PLAY_FIELD_COINS = 500000;
+
   constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {
     this.fillPlayField();
   }
@@ -15,12 +17,18 @@ export class PlayService {
       this.PLAY_FIELD_HEIGHT * this.PLAY_FIELD_WIDTH,
     );
 
-    for (
-      let i: number = 0;
-      i < this.PLAY_FIELD_HEIGHT * this.PLAY_FIELD_WIDTH;
-      ++i
-    ) {
-      cells[i] = 1;
+    let playFieldCoins = this.PLAY_FIELD_COINS;
+
+    while (playFieldCoins >= 0) {
+      const cellIndex = Math.floor(
+        Math.random() * (this.PLAY_FIELD_HEIGHT * this.PLAY_FIELD_WIDTH),
+      );
+
+      if (cells[cellIndex] !== 1) {
+        cells[cellIndex] = 1;
+
+        playFieldCoins -= 1;
+      }
     }
 
     const buffer = Buffer.from(cells);
