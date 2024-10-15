@@ -29,8 +29,6 @@ export class WebsocketGateway {
     @Inject() private readonly playService: PlayService,
   ) {}
 
-  private connections: Map<string, WebSocket> = new Map<string, WebSocket>();
-
   @SubscribeMessage(MessageEnum.REQUEST_CHANGE_QUAD)
   async onRequestPlayField(
     @ConnectedSocket() webSocket: WebSocket,
