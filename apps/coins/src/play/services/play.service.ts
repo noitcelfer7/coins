@@ -19,7 +19,7 @@ export class PlayService {
 
     let playFieldCoins = this.PLAY_FIELD_COINS;
 
-    while (playFieldCoins >= 0) {
+    while (playFieldCoins > 0) {
       const cellIndex = Math.floor(
         Math.random() * (this.PLAY_FIELD_HEIGHT * this.PLAY_FIELD_WIDTH),
       );
@@ -61,7 +61,7 @@ export class PlayService {
       y >= 0 &&
       y < this.PLAY_FIELD_HEIGHT
     ) {
-      let value = await this.cacheManager.store.get<string>('PLAY_FIELD');
+      const value = await this.cacheManager.store.get<string>('PLAY_FIELD');
 
       const buffer = Buffer.from(value, 'hex');
 
@@ -71,11 +71,11 @@ export class PlayService {
 
       buffer[y * this.PLAY_FIELD_HEIGHT + x] = 2 | isCellContainsCoin;
 
-      value = buffer.toString('hex');
+      const temp = buffer.toString('hex');
 
-      await this.cacheManager.set('PLAY_FIELD', value, { ttl: 0 });
+      await this.cacheManager.set('PLAY_FIELD', temp, { ttl: 0 });
 
-      return isCellContainsCoin;
+      return Boolean(isCellContainsCoin);
     }
 
     return false;
