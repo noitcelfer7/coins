@@ -24,7 +24,11 @@ export class PlayService {
         Math.random() * (this.PLAY_FIELD_HEIGHT * this.PLAY_FIELD_WIDTH),
       );
 
-      if (cells[cellIndex] !== 1) {
+      // 0000'00[isCellOpened][isCellContainsCoin]
+
+      const isCellContainsCoin = cells[cellIndex] & 1;
+
+      if (!isCellContainsCoin) {
         cells[cellIndex] = 1;
 
         playFieldCoins -= 1;
@@ -51,31 +55,29 @@ export class PlayService {
   }
 
   async openCell(x: number, y: number) {
-    let isCoinFound = false;
-
     if (
       x >= 0 &&
       x < this.PLAY_FIELD_WIDTH &&
       y >= 0 &&
       y < this.PLAY_FIELD_HEIGHT
     ) {
-      const value = await this.cacheManager.store.get<string>('PLAY_FIELD');
+      let value = await this.cacheManager.store.get<string>('PLAY_FIELD');
 
       const buffer = Buffer.from(value, 'hex');
 
-      const isNotZero = buffer[y * this.PLAY_FIELD_HEIGHT + x] !== 0;
+      // 0000'00[isCellOpened][isCellContainsCoin]
 
-      if (isNotZero) {
-        isCoinFound = true;
+      const isCellContainsCoin = buffer[y * this.PLAY_FIELD_HEIGHT + x] & 1;
 
-        buffer[y * this.PLAY_FIELD_HEIGHT + x] = 0;
+      buffer[y * this.PLAY_FIELD_HEIGHT + x] = 2 | isCellContainsCoin;
 
-        const value = buffer.toString('hex');
+      value = buffer.toString('hex');
 
-        await this.cacheManager.set('PLAY_FIELD', value, { ttl: 0 });
-      }
+      await this.cacheManager.set('PLAY_FIELD', value, { ttl: 0 });
+
+      return isCellContainsCoin;
     }
 
-    return isCoinFound;
+    return false;
   }
 }
