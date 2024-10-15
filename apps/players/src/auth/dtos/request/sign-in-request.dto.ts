@@ -1,4 +1,7 @@
-export class SignInRequestDto {
-  password: string;
-  username: string;
-}
+import { PickType } from '@nestjs/swagger';
+import { SignUpRequestDto } from './sign-up-request.dto';
+
+export class SignInRequestDto extends PickType(SignUpRequestDto, [
+  'password',
+  'username',
+]) {}

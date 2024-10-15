@@ -70,6 +70,16 @@ export class PlayService {
           y,
           username,
         });
+
+        const result = await this.cacheManager.store.get<string>('PLAY_FIELD');
+
+        const playField = Buffer.from(result, 'hex');
+
+        playField[y * 1000 + x] = 0;
+
+        const value = playField.toString('hex');
+
+        await this.cacheManager.set('PLAY_FIELD', value, { ttl: 0 });
       }
     }
 

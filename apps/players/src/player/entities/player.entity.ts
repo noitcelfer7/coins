@@ -6,6 +6,7 @@ export class PlayerEntity {
   password: string;
 
   @Column('bigint', {
+    default: 0,
     nullable: true,
   })
   balance: number;

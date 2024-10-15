@@ -1,13 +1,45 @@
-import { Controller, Inject } from '@nestjs/common';
-import { EventPattern } from '@nestjs/microservices';
+import {
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Inject,
+  Param,
+  UseGuards,
+} from '@nestjs/common';
 import { BalanceService } from '../service/balance.service';
+import {
+  ApiBearerAuth,
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
+import { AuthGuard } from '../../auth/guards';
+import { EventPattern, Payload } from '@nestjs/microservices';
 
-@Controller()
+@ApiTags('Баланс.')
+@Controller('balance')
 export class BalanceController {
   constructor(@Inject() private readonly balanceService: BalanceService) {}
 
+  @ApiBearerAuth('jwt-auth')
+  @ApiInternalServerErrorResponse({ description: 'Внутренняя ошибка сервера.' })
+  @ApiOkResponse({ description: 'Ок.' })
+  @ApiOperation({ summary: 'Получить баланс пользователя. ' })
+  @Get(':username')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard)
+  async getBalance(@Param('username') username: string) {
+    const balance = await this.balanceService.getBalance(username);
+
+    return balance;
+  }
+
   @EventPattern('COIN_FOUND')
-  async onCoinFound(data: { x: number; y: number; username: string }) {
-    await this.balanceService.replenish(data.username, 1);
+  async replenishBalance(
+    @Payload() payload: { x: number; y: number; username: string },
+  ) {
+    await this.balanceService.replenishBalance(payload.username, 1);
   }
 }

@@ -5,8 +5,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { PlayerEntity } from '../player/entities';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PlayerEntity])],
   controllers: [BalanceController],
+  imports: [TypeOrmModule.forFeature([PlayerEntity])],
   providers: [BalanceService],
 })
 export class BalanceModule {}
