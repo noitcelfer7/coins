@@ -8,7 +8,7 @@ import { WebsocketGateway } from './gateways';
 @Module({
   imports: [
     CacheModule.register({
-      host: 'localhost',
+      host: 'redis',
       port: 6379,
       store: redisStore,
     }),
@@ -17,7 +17,7 @@ import { WebsocketGateway } from './gateways';
         name: 'PLAYERS_MICROSERVICE',
         options: {
           client: {
-            brokers: ['localhost:19092'],
+            brokers: ['redpanda:19092'],
             clientId: 'PLAYERS_CLIENT',
           },
           consumer: {

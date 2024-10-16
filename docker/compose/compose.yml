@@ -1,6 +1,51 @@
 networks:
   internal: {}
 services:
+  coins:
+    build:
+      context: ../../
+      dockerfile: ./docker/file/Dockerfile.players
+    depends_on:
+      - redis
+      - redpanda
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+
+      - TYPEORM_DATABASE=${TYPEORM_DATABASE}
+      - TYPEORM_HOST=${TYPEORM_HOST}
+      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD}
+      - TYPEORM_PORT=${TYPEORM_PORT}
+      - TYPEORM_USERNAME=${TYPEORM_USERNAME}
+      - TYPEORM_SYNCHRONIZE=${TYPEORM_SYNCHRONIZE}
+    networks:
+      - internal
+    ports:
+      - 7878:7878
+      - 9999:9999
+    restart: unless-stopped
+  players:
+    build:
+      context: ../../
+      dockerfile: ./docker/file/Dockerfile.players
+    depends_on:
+      - redis
+      - redpanda
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
+
+      - TYPEORM_DATABASE=${TYPEORM_DATABASE}
+      - TYPEORM_HOST=${TYPEORM_HOST}
+      - TYPEORM_PASSWORD=${TYPEORM_PASSWORD}
+      - TYPEORM_PORT=${TYPEORM_PORT}
+      - TYPEORM_USERNAME=${TYPEORM_USERNAME}
+      - TYPEORM_SYNCHRONIZE=${TYPEORM_SYNCHRONIZE}
+    networks:
+      - internal
+    ports:
+      - 8787:8787
+    restart: unless-stopped
   postgresql:
     environment:
       - POSTGRES_DB=${POSTGRES_DB}

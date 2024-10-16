@@ -9,13 +9,13 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: 'http://git :5173',
   });
 
   app.connectMicroservice<MicroserviceOptions>({
     options: {
       client: {
-        brokers: ['localhost:19092'],
+        brokers: ['redpanda:19092'],
         clientId: 'PLAYERS_CLIENT',
       },
       consumer: {

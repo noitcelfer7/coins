@@ -1,0 +1,19 @@
+FROM node:20.18.0
+
+WORKDIR /players/
+
+COPY --chown=node:node ./nest-cli.json ./tsconfig.build.json ./tsconfig.json ./package.json ./package-lock.json /players/
+COPY --chown=node:node ./apps/players/ /players/apps/players/
+
+RUN \
+  npm install -g @nestjs/cli
+
+RUN \
+  npm clean-install
+
+RUN \
+  nest build players
+
+USER node
+
+CMD ["node", "./dist/apps/players/main.js"]

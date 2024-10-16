@@ -1,0 +1,19 @@
+FROM node:20.18.0
+
+WORKDIR /coins/
+
+COPY --chown=node:node ./nest-cli.json ./tsconfig.build.json ./tsconfig.json ./package.json ./package-lock.json /coins/
+COPY --chown=node:node ./apps/coins/ /coins/apps/coins/
+
+RUN \
+  npm install -g @nestjs/cli
+
+RUN \
+  npm clean-install
+
+RUN \
+  nest build coins
+
+USER node
+
+CMD ["node", "./dist/apps/coins/main.js"]
