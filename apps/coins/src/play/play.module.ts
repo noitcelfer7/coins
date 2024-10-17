@@ -17,7 +17,7 @@ import { WebsocketGateway } from './gateways';
         name: 'PLAYERS_MICROSERVICE',
         options: {
           client: {
-            brokers: ['redpanda:19092'],
+            brokers: ['redpanda:9092'],
             clientId: 'PLAYERS_CLIENT',
           },
           consumer: {

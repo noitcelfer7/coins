@@ -2,6 +2,7 @@ import { ConfigService, registerAs } from '@nestjs/config';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { config } from 'dotenv';
 import { PlayerEntity } from '../../player/entities';
+import { HistoryRecordEntity } from '../../history/entities';
 
 config({ path: ['.env.dev', '.env.prod'] });
 
@@ -11,7 +12,7 @@ const configService = new ConfigService();
 
 const dataSourceOptions: DataSourceOptions = {
   database: configService.get<string>('TYPEORM_DATABASE'),
-  entities: [PlayerEntity],
+  entities: [PlayerEntity, HistoryRecordEntity],
   host: configService.get<string>('TYPEORM_HOST'),
   password: configService.get<string>('TYPEORM_PASSWORD'),
   port: configService.get<number>('TYPEORM_PORT'),

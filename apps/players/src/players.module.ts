@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { BalanceModule } from './balance/balance.module';
 import typeormConfig from './config/typeorm/typeorm.config';
+import { HistoryModule } from './history/history.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import typeormConfig from './config/typeorm/typeorm.config';
     AuthModule,
     PlayerModule,
     BalanceModule,
+    HistoryModule,
   ],
 })
 export class PlayersModule {}

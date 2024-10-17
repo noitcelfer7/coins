@@ -3,13 +3,19 @@ import { ClientKafka } from '@nestjs/microservices';
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { WebSocket } from 'ws';
 import { PlayService } from '../services';
 import { MessageEnum } from '../enums';
-import { FindRequestDto, OpenRequestDto, PlayFieldResponseDto } from '../dtos';
+import {
+  FindRequestDto,
+  OpenRequestDto,
+  PlayFieldResponseDto,
+  StartGameRequestDto,
+} from '../dtos';
 import { JwtService } from '@nestjs/jwt';
 
 @WebSocketGateway(9999, {
@@ -18,8 +24,16 @@ import { JwtService } from '@nestjs/jwt';
   },
   transports: ['websocket'],
 })
-export class WebsocketGateway {
+export class WebsocketGateway implements OnGatewayDisconnect {
   private readonly logger = new Logger(WebSocketGateway.name);
+
+  private connections: Map<
+    WebSocket,
+    { username: string; active: boolean; count: number }
+  > = new Map<
+    WebSocket,
+    { username: string; active: boolean; count: number }
+  >();
 
   constructor(
     @Inject()
@@ -28,6 +42,53 @@ export class WebsocketGateway {
     private readonly playersMicroserviceClientKafka: ClientKafka,
     @Inject() private readonly playService: PlayService,
   ) {}
+
+  handleDisconnect(webSocket: WebSocket) {
+    const info = this.connections.get(webSocket);
+
+    if (info) {
+      this.playersMicroserviceClientKafka.emit('PLAYER_DISCONNECTED', {
+        username: info.username,
+        count: info.count,
+      });
+    }
+  }
+
+  @SubscribeMessage(MessageEnum.REQUEST_START_GAME)
+  async onRequestStartGame(
+    @ConnectedSocket() webSocket: WebSocket,
+    @MessageBody() startGameRequestDto: StartGameRequestDto,
+  ) {
+    const isTokenValid = this.jwtService.verify(
+      startGameRequestDto.accessToken,
+    );
+
+    if (!isTokenValid) {
+      webSocket.close();
+
+      this.logger.warn(`(!isTokenValid) [${startGameRequestDto.accessToken}]`);
+
+      return;
+    }
+
+    const { username } = this.jwtService.decode(
+      startGameRequestDto.accessToken,
+    );
+
+    if (!username) {
+      webSocket.close();
+
+      this.logger.warn(`(!username) [${username}]`);
+
+      return;
+    }
+
+    this.connections.set(webSocket, {
+      username,
+      active: true,
+      count: 0,
+    });
+  }
 
   @SubscribeMessage(MessageEnum.REQUEST_CHANGE_QUAD)
   async onRequestPlayField(
@@ -65,8 +126,6 @@ export class WebsocketGateway {
     };
 
     webSocket.send(JSON.stringify(playFieldResponseDto));
-
-    this.logger.log('');
   }
 
   @SubscribeMessage(MessageEnum.REQUEST_OPEN_CELL)
@@ -105,6 +164,12 @@ export class WebsocketGateway {
         y: openRequestDto.y,
         username,
       });
+
+      const info = this.connections.get(webSocket);
+
+      if (info) {
+        this.connections.set(webSocket, { ...info, count: info.count + 1 });
+      }
     }
 
     this.logger.log(

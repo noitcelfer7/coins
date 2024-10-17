@@ -4,7 +4,7 @@ services:
   coins:
     build:
       context: ../../
-      dockerfile: ./docker/file/Dockerfile.players
+      dockerfile: ./docker/file/Dockerfile.coins
     depends_on:
       - redis
       - redpanda
@@ -31,6 +31,7 @@ services:
     depends_on:
       - redis
       - redpanda
+      - postgresql
     environment:
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
